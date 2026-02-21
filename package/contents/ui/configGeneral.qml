@@ -10,6 +10,7 @@ KCM.SimpleKCM {
     id: configPage
 
     property alias cfg_skipConfirmation: skipConfirmationCheckbox.checked
+    property alias cfg_skipDefaultConfirmation: skipDefaultConfirmationCheckbox.checked
     property alias cfg_hideDuplicates: hideDuplicatesCheckbox.checked
     property string cfg_customNames
     property string cfg_customOrder
@@ -174,6 +175,11 @@ KCM.SimpleKCM {
             id: skipConfirmationCheckbox
             Kirigami.FormData.label: i18n("Behavior:")
             text: i18n("Skip confirmation before rebooting")
+        }
+
+        QQC2.CheckBox {
+            id: skipDefaultConfirmationCheckbox
+            text: i18n("Skip confirmation when changing default boot entry")
         }
 
         QQC2.CheckBox {

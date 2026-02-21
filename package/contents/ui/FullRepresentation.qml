@@ -326,8 +326,13 @@ ColumnLayout {
     function triggerSetDefault(bootNum, bootName) {
         root.selectedBootNum = bootNum
         root.selectedBootName = bootName
-        root.confirmingDefault = true
-        root.confirming = true
+
+        if (Plasmoid.configuration.skipDefaultConfirmation) {
+            setDefaultBoot(bootNum)
+        } else {
+            root.confirmingDefault = true
+            root.confirming = true
+        }
     }
 
     function setNextBootAndReboot(bootNum) {

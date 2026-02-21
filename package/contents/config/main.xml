@@ -9,6 +9,10 @@
             <default>false</default>
             <label>Skip the confirmation prompt before rebooting</label>
         </entry>
+        <entry name="skipDefaultConfirmation" type="Bool">
+            <default>false</default>
+            <label>Skip the confirmation prompt when changing the default boot entry</label>
+        </entry>
         <entry name="hideDuplicates" type="Bool">
             <default>true</default>
             <label>Hide UEFI OS duplicate entries</label>
