@@ -1,4 +1,5 @@
 # Next Boot
+<img width="776" height="316" alt="image" src="https://github.com/user-attachments/assets/aa8a7a9f-c9a0-43fc-8388-b894e523673d" />
 
 A KDE Plasma 6 panel widget for selecting an EFI boot entry and rebooting into it with one click.
 
