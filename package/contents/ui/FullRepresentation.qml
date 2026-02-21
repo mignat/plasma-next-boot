@@ -29,12 +29,7 @@ ColumnLayout {
 
         var items = bootEntriesModel.count + usbDevicesModel.count
         var headers = 0
-        if (bootEntriesModel.count > 0 && root.currentBootNum !== "") headers++ // Currently Booted
-        // Check if there are non-current boot entries
-        var hasOther = false
-        for (var i = 0; i < bootEntriesModel.count; i++)
-            if (!bootEntriesModel.get(i).isCurrent) { hasOther = true; break }
-        if (hasOther) headers++ // Boot Options
+        if (bootEntriesModel.count > 0) headers++ // Boot Options
         if (usbDevicesModel.count > 0) headers++ // USB Devices
         items += headers
 
@@ -225,11 +220,11 @@ ColumnLayout {
             filtered.push(entry)
         }
 
-        // Move the currently booted entry to the top
+        // Move the currently booted entry to the back
         for (var c = 0; c < filtered.length; c++) {
-            if (filtered[c].bootNum === root.currentBootNum && c > 0) {
+            if (filtered[c].bootNum === root.currentBootNum && c < filtered.length - 1) {
                 var current = filtered.splice(c, 1)[0]
-                filtered.unshift(current)
+                filtered.push(current)
                 break
             }
         }
@@ -459,120 +454,10 @@ ColumnLayout {
                  && (bootEntriesModel.count > 0 || usbDevicesModel.count > 0)
         spacing: 0
 
-                // --- Currently Booted header ---
-                PlasmaComponents.ItemDelegate {
-                    Layout.fillWidth: true
-                    visible: bootEntriesModel.count > 0 && root.currentBootNum !== ""
-                    enabled: false
-
-                    contentItem: RowLayout {
-                        spacing: Kirigami.Units.smallSpacing
-
-                        Kirigami.Icon {
-                            source: "checkmark"
-                            color: Kirigami.Theme.textColor
-
-                            Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                            Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                            opacity: 0.7
-                        }
-
-                        PlasmaComponents.Label {
-                            text: i18n("Currently Booted")
-                            font: Kirigami.Theme.smallFont
-                            opacity: 0.7
-                        }
-
-                        Kirigami.Separator {
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-
-                // --- Current boot entry ---
-                Repeater {
-                    model: bootEntriesModel
-
-                    delegate: PlasmaComponents.ItemDelegate {
-                        Layout.fillWidth: true
-                        visible: model.isCurrent
-
-                        contentItem: RowLayout {
-                            spacing: Kirigami.Units.smallSpacing
-
-                            Kirigami.Icon {
-                                source: model.entryIcon
-                                color: Kirigami.Theme.textColor
-    
-                                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                            }
-
-                            ColumnLayout {
-                                Layout.fillWidth: true
-                                spacing: 0
-
-                                PlasmaComponents.Label {
-                                    Layout.fillWidth: true
-                                    text: model.name
-                                    elide: Text.ElideRight
-                                    font.bold: true
-                                }
-
-                                PlasmaComponents.Label {
-                                    Layout.fillWidth: true
-                                    text: {
-                                        var parts = ["Boot" + model.bootNum]
-                                        if (model.isNext) parts.unshift(i18n("Next"))
-                                        return parts.join(" \u00b7 ")
-                                    }
-                                    elide: Text.ElideRight
-                                    font: Kirigami.Theme.smallFont
-                                    opacity: 0.7
-                                }
-                            }
-
-                            Kirigami.Icon {
-                                source: model.isDefault ? "favorite" : "non-starred"
-                                color: Kirigami.Theme.textColor
-                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                                opacity: model.isDefault ? 0.7 : 0.3
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: model.isDefault ? Qt.ArrowCursor : Qt.PointingHandCursor
-                                    enabled: !model.isDefault
-                                    onClicked: setDefaultBoot(model.bootNum)
-                                }
-
-                                PlasmaComponents.ToolTip {
-                                    text: model.isDefault ? i18n("Default boot entry") : i18n("Set as default boot entry")
-                                }
-                            }
-
-                            Kirigami.Icon {
-                                source: "system-reboot"
-                                color: Kirigami.Theme.textColor
-
-                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
-                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
-                                opacity: 0.5
-                            }
-                        }
-
-                        onClicked: triggerBoot(model.bootNum, model.name)
-                    }
-                }
-
                 // --- Boot Options header ---
                 PlasmaComponents.ItemDelegate {
                     Layout.fillWidth: true
-                    visible: {
-                        for (var i = 0; i < bootEntriesModel.count; i++)
-                            if (!bootEntriesModel.get(i).isCurrent) return true
-                        return false
-                    }
+                    visible: bootEntriesModel.count > 0
                     enabled: false
 
                     contentItem: RowLayout {
@@ -599,13 +484,12 @@ ColumnLayout {
                     }
                 }
 
-                // --- Other boot entries ---
+                // --- Boot entries ---
                 Repeater {
                     model: bootEntriesModel
 
                     delegate: PlasmaComponents.ItemDelegate {
                         Layout.fillWidth: true
-                        visible: !model.isCurrent
 
                         contentItem: RowLayout {
                             spacing: Kirigami.Units.smallSpacing
@@ -613,7 +497,7 @@ ColumnLayout {
                             Kirigami.Icon {
                                 source: model.entryIcon
                                 color: Kirigami.Theme.textColor
-    
+
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
                             }
@@ -626,12 +510,14 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     text: model.name
                                     elide: Text.ElideRight
+                                    font.bold: model.isCurrent
                                 }
 
                                 PlasmaComponents.Label {
                                     Layout.fillWidth: true
                                     text: {
                                         var parts = ["Boot" + model.bootNum]
+                                        if (model.isCurrent) parts.unshift(i18n("Current"))
                                         if (model.isNext) parts.unshift(i18n("Next"))
                                         if (!model.active) parts.push(i18n("Inactive"))
                                         return parts.join(" \u00b7 ")
