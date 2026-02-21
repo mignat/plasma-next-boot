@@ -44,13 +44,15 @@ ColumnLayout {
         return Math.min(bootEntriesModel.count * Kirigami.Units.gridUnit * 2.0
                         + usbDevicesModel.count * Kirigami.Units.gridUnit * 2.0
                         + headers * Kirigami.Units.gridUnit * 2.0
-                        + Kirigami.Units.largeSpacing,
+                        + Kirigami.Units.largeSpacing * 2,
                         Kirigami.Units.gridUnit * 30)
     }
     spacing: 0
 
     property string currentBootNum: ""
     property string nextBootNum: ""
+    property string defaultBootNum: ""
+    property var bootOrder: []
     property string selectedBootNum: ""
     property string selectedBootName: ""
     property bool loading: true
@@ -98,6 +100,12 @@ ColumnLayout {
                     parseBootEntries(stdout)
                     root.loading = false
                 }
+            } else if (sourceName.indexOf("efibootmgr -o") !== -1) {
+                if (exitCode !== 0) {
+                    root.errorText = i18n("Failed to set default boot entry.\nAuthentication may have been cancelled.")
+                } else {
+                    refresh()
+                }
             } else if (sourceName.indexOf("efibootmgr -n") !== -1) {
                 if (exitCode !== 0) {
                     root.errorText = i18n("Failed to set next boot entry.\nAuthentication may have been cancelled.")
@@ -127,6 +135,8 @@ ColumnLayout {
         bootEntriesModel.clear()
         root.currentBootNum = ""
         root.nextBootNum = ""
+        root.defaultBootNum = ""
+        root.bootOrder = []
 
         var lines = output.split("\n")
         var rawEntries = []
@@ -144,6 +154,14 @@ ColumnLayout {
             var nextMatch = line.match(/^BootNext:\s*([0-9A-Fa-f]+)/)
             if (nextMatch) {
                 root.nextBootNum = nextMatch[1]
+                continue
+            }
+
+            var orderMatch = line.match(/^BootOrder:\s*(.+)/)
+            if (orderMatch) {
+                root.bootOrder = orderMatch[1].split(",").map(function(s) { return s.trim() })
+                if (root.bootOrder.length > 0)
+                    root.defaultBootNum = root.bootOrder[0]
                 continue
             }
 
@@ -225,6 +243,7 @@ ColumnLayout {
                 originalName: fe.originalName,
                 isCurrent: fe.bootNum === root.currentBootNum,
                 isNext: fe.bootNum === root.nextBootNum,
+                isDefault: fe.bootNum === root.defaultBootNum,
                 entryIcon: Utils.bootEntryIcon(fe.originalName)
             })
         }
@@ -296,6 +315,16 @@ ColumnLayout {
             if (bootNumsToHide[bootEntriesModel.get(k).bootNum])
                 bootEntriesModel.remove(k)
         }
+    }
+
+    function setDefaultBoot(bootNum) {
+        if (!/^[0-9A-Fa-f]{4}$/.test(bootNum)) return
+        var newOrder = [bootNum]
+        for (var i = 0; i < root.bootOrder.length; i++) {
+            if (root.bootOrder[i] !== bootNum)
+                newOrder.push(root.bootOrder[i])
+        }
+        executable.connectSource("pkexec efibootmgr -o " + newOrder.join(","))
     }
 
     function setNextBootAndReboot(bootNum) {
@@ -504,9 +533,28 @@ ColumnLayout {
                             }
 
                             Kirigami.Icon {
+                                source: model.isDefault ? "favorite" : "non-starred"
+                                color: Kirigami.Theme.textColor
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                opacity: model.isDefault ? 0.7 : 0.3
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: model.isDefault ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    enabled: !model.isDefault
+                                    onClicked: setDefaultBoot(model.bootNum)
+                                }
+
+                                PlasmaComponents.ToolTip {
+                                    text: model.isDefault ? i18n("Default boot entry") : i18n("Set as default boot entry")
+                                }
+                            }
+
+                            Kirigami.Icon {
                                 source: "system-reboot"
                                 color: Kirigami.Theme.textColor
-    
+
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 opacity: 0.5
@@ -595,9 +643,28 @@ ColumnLayout {
                             }
 
                             Kirigami.Icon {
+                                source: model.isDefault ? "favorite" : "non-starred"
+                                color: Kirigami.Theme.textColor
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                opacity: model.isDefault ? 0.7 : 0.3
+
+                                MouseArea {
+                                    anchors.fill: parent
+                                    cursorShape: model.isDefault ? Qt.ArrowCursor : Qt.PointingHandCursor
+                                    enabled: !model.isDefault
+                                    onClicked: setDefaultBoot(model.bootNum)
+                                }
+
+                                PlasmaComponents.ToolTip {
+                                    text: model.isDefault ? i18n("Default boot entry") : i18n("Set as default boot entry")
+                                }
+                            }
+
+                            Kirigami.Icon {
                                 source: "system-reboot"
                                 color: Kirigami.Theme.textColor
-    
+
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 opacity: 0.5
