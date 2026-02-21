@@ -60,6 +60,28 @@ On panel open (and on hotplug events), a scan script:
 
 If the firmware already created a boot entry for the USB, clicking the device reuses it. Otherwise, a temporary `NB-USB:` entry is created, used for one boot, and cleaned up on the next invocation. The entry is excluded from `BootOrder` so the system never gets stuck booting from USB.
 
+## Passwordless operation (optional)
+
+By default, `pkexec` prompts for your password each time you reboot or change the default boot entry. To skip the password prompt, allow your user to run `efibootmgr` as root without authentication:
+
+```bash
+echo "%wheel ALL=(ALL) NOPASSWD: /usr/bin/efibootmgr" | sudo tee /etc/sudoers.d/efibootmgr
+```
+
+Then create a polkit rule so `pkexec efibootmgr` also works without a prompt:
+
+```bash
+sudo tee /etc/polkit-1/rules.d/50-efibootmgr.rules << 'EOF'
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.policykit.exec" &&
+        action.lookup("program") == "/usr/bin/efibootmgr" &&
+        subject.isInGroup("wheel")) {
+        return polkit.Result.YES;
+    }
+});
+EOF
+```
+
 ## Configuration
 
 Right-click the widget and select **Configure...** to:

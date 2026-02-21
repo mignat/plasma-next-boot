@@ -36,9 +36,9 @@ ColumnLayout {
         if (items === 0)
             return Kirigami.Units.gridUnit * 6
 
-        return Math.min(bootEntriesModel.count * Kirigami.Units.gridUnit * 2.0
-                        + usbDevicesModel.count * Kirigami.Units.gridUnit * 2.0
-                        + headers * Kirigami.Units.gridUnit * 2.0
+        return Math.min(bootEntriesModel.count * Kirigami.Units.gridUnit * 2.5
+                        + usbDevicesModel.count * Kirigami.Units.gridUnit * 2.5
+                        + headers * Kirigami.Units.gridUnit * 1.5
                         + Kirigami.Units.largeSpacing * 2,
                         Kirigami.Units.gridUnit * 30)
     }
@@ -53,6 +53,7 @@ ColumnLayout {
     property bool loading: true
     property string errorText: ""
     property bool confirming: false
+    property bool confirmingDefault: false
 
     property bool expanded: false
     property bool usbLoading: false
@@ -322,6 +323,13 @@ ColumnLayout {
         executable.connectSource("pkexec efibootmgr -o " + newOrder.join(","))
     }
 
+    function triggerSetDefault(bootNum, bootName) {
+        root.selectedBootNum = bootNum
+        root.selectedBootName = bootName
+        root.confirmingDefault = true
+        root.confirming = true
+    }
+
     function setNextBootAndReboot(bootNum) {
         if (!/^[0-9A-Fa-f]{4}$/.test(bootNum)) {
             root.errorText = i18n("Invalid boot entry number.")
@@ -392,6 +400,7 @@ ColumnLayout {
         root.usbLoading = true
         root.errorText = ""
         root.confirming = false
+        root.confirmingDefault = false
         root.selectedIsUsb = false
         bootEntriesModel.clear()
         usbDevicesModel.clear()
@@ -455,18 +464,20 @@ ColumnLayout {
         spacing: 0
 
                 // --- Boot Options header ---
-                PlasmaComponents.ItemDelegate {
+                Item {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: Kirigami.Units.gridUnit * 1.5
                     visible: bootEntriesModel.count > 0
-                    enabled: false
 
-                    contentItem: RowLayout {
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Kirigami.Units.smallSpacing * 2
+                        anchors.rightMargin: Kirigami.Units.smallSpacing * 2
                         spacing: Kirigami.Units.smallSpacing
 
                         Kirigami.Icon {
                             source: "drive-harddisk"
                             color: Kirigami.Theme.textColor
-
                             Layout.preferredWidth: Kirigami.Units.iconSizes.small
                             Layout.preferredHeight: Kirigami.Units.iconSizes.small
                             opacity: 0.7
@@ -539,7 +550,7 @@ ColumnLayout {
                                     anchors.fill: parent
                                     cursorShape: model.isDefault ? Qt.ArrowCursor : Qt.PointingHandCursor
                                     enabled: !model.isDefault
-                                    onClicked: setDefaultBoot(model.bootNum)
+                                    onClicked: triggerSetDefault(model.bootNum, model.name)
                                 }
 
                                 PlasmaComponents.ToolTip {
@@ -562,18 +573,20 @@ ColumnLayout {
                 }
 
                 // --- USB section header ---
-                PlasmaComponents.ItemDelegate {
+                Item {
                     Layout.fillWidth: true
+                    Layout.preferredHeight: Kirigami.Units.gridUnit * 1.5
                     visible: usbDevicesModel.count > 0
-                    enabled: false
 
-                    contentItem: RowLayout {
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Kirigami.Units.smallSpacing * 2
+                        anchors.rightMargin: Kirigami.Units.smallSpacing * 2
                         spacing: Kirigami.Units.smallSpacing
 
                         Kirigami.Icon {
                             source: "drive-removable-media-usb"
                             color: Kirigami.Theme.textColor
-
                             Layout.preferredWidth: Kirigami.Units.iconSizes.small
                             Layout.preferredHeight: Kirigami.Units.iconSizes.small
                             opacity: 0.7
@@ -673,7 +686,9 @@ ColumnLayout {
 
         Kirigami.Icon {
             Layout.alignment: Qt.AlignHCenter
-            source: root.selectedIsUsb ? "drive-removable-media-usb" : "system-reboot"
+            source: root.confirmingDefault ? "favorite"
+                  : root.selectedIsUsb ? "drive-removable-media-usb"
+                  : "system-reboot"
             color: Kirigami.Theme.textColor
 
             Layout.preferredWidth: Kirigami.Units.iconSizes.huge
@@ -686,7 +701,9 @@ ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
-            text: i18n("Reboot into <b>%1</b>?", root.selectedBootName)
+            text: root.confirmingDefault
+                ? i18n("Set <b>%1</b> as default?", root.selectedBootName)
+                : i18n("Reboot into <b>%1</b>?", root.selectedBootName)
         }
 
         PlasmaComponents.Label {
@@ -695,9 +712,11 @@ ColumnLayout {
             horizontalAlignment: Text.AlignHCenter
             font: Kirigami.Theme.smallFont
             opacity: 0.7
-            text: root.selectedIsUsb
-                ? i18n("A temporary boot entry will be created for this USB device")
-                : i18n("Boot%1 will be set as the next boot entry", root.selectedBootNum)
+            text: root.confirmingDefault
+                ? i18n("This will change the default boot order")
+                : root.selectedIsUsb
+                    ? i18n("A temporary boot entry will be created for this USB device")
+                    : i18n("Boot%1 will be set as the next boot entry", root.selectedBootNum)
         }
 
         RowLayout {
@@ -707,17 +726,25 @@ ColumnLayout {
             PlasmaComponents.Button {
                 text: i18n("Cancel")
                 icon.name: "dialog-cancel"
-                onClicked: root.confirming = false
+                onClicked: {
+                    root.confirming = false
+                    root.confirmingDefault = false
+                }
             }
 
             PlasmaComponents.Button {
-                text: i18n("Reboot Now")
-                icon.name: "system-reboot"
+                text: root.confirmingDefault ? i18n("Set Default") : i18n("Reboot Now")
+                icon.name: root.confirmingDefault ? "favorite" : "system-reboot"
                 onClicked: {
-                    if (root.selectedIsUsb)
+                    if (root.confirmingDefault) {
+                        setDefaultBoot(root.selectedBootNum)
+                        root.confirming = false
+                        root.confirmingDefault = false
+                    } else if (root.selectedIsUsb) {
                         executeUsbBoot()
-                    else
+                    } else {
                         setNextBootAndReboot(root.selectedBootNum)
+                    }
                 }
             }
         }
