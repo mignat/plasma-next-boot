@@ -28,12 +28,23 @@ ColumnLayout {
             return Kirigami.Units.gridUnit * 8
 
         var items = bootEntriesModel.count + usbDevicesModel.count
-        if (usbDevicesModel.count > 0) items++ // USB section header
+        var headers = 0
+        if (bootEntriesModel.count > 0 && root.currentBootNum !== "") headers++ // Currently Booted
+        // Check if there are non-current boot entries
+        var hasOther = false
+        for (var i = 0; i < bootEntriesModel.count; i++)
+            if (!bootEntriesModel.get(i).isCurrent) { hasOther = true; break }
+        if (hasOther) headers++ // Boot Options
+        if (usbDevicesModel.count > 0) headers++ // USB Devices
+        items += headers
 
         if (items === 0)
             return Kirigami.Units.gridUnit * 6
 
-        return Math.min(items * Kirigami.Units.gridUnit * 2.5,
+        return Math.min(bootEntriesModel.count * Kirigami.Units.gridUnit * 2.0
+                        + usbDevicesModel.count * Kirigami.Units.gridUnit * 2.0
+                        + headers * Kirigami.Units.gridUnit * 2.0
+                        + Kirigami.Units.largeSpacing,
                         Kirigami.Units.gridUnit * 30)
     }
     spacing: 0
@@ -419,12 +430,43 @@ ColumnLayout {
                  && (bootEntriesModel.count > 0 || usbDevicesModel.count > 0)
         spacing: 0
 
-                // --- EFI boot entries ---
+                // --- Currently Booted header ---
+                PlasmaComponents.ItemDelegate {
+                    Layout.fillWidth: true
+                    visible: bootEntriesModel.count > 0 && root.currentBootNum !== ""
+                    enabled: false
+
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
+
+                        Kirigami.Icon {
+                            source: "checkmark"
+                            color: Kirigami.Theme.textColor
+
+                            Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                            Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                            opacity: 0.7
+                        }
+
+                        PlasmaComponents.Label {
+                            text: i18n("Currently Booted")
+                            font: Kirigami.Theme.smallFont
+                            opacity: 0.7
+                        }
+
+                        Kirigami.Separator {
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                // --- Current boot entry ---
                 Repeater {
                     model: bootEntriesModel
 
                     delegate: PlasmaComponents.ItemDelegate {
                         Layout.fillWidth: true
+                        visible: model.isCurrent
 
                         contentItem: RowLayout {
                             spacing: Kirigami.Units.smallSpacing
@@ -432,6 +474,7 @@ ColumnLayout {
                             Kirigami.Icon {
                                 source: model.entryIcon
                                 color: Kirigami.Theme.textColor
+    
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
                             }
@@ -444,14 +487,103 @@ ColumnLayout {
                                     Layout.fillWidth: true
                                     text: model.name
                                     elide: Text.ElideRight
-                                    font.bold: model.isCurrent
+                                    font.bold: true
                                 }
 
                                 PlasmaComponents.Label {
                                     Layout.fillWidth: true
                                     text: {
                                         var parts = ["Boot" + model.bootNum]
-                                        if (model.isCurrent) parts.unshift(i18n("Current"))
+                                        if (model.isNext) parts.unshift(i18n("Next"))
+                                        return parts.join(" \u00b7 ")
+                                    }
+                                    elide: Text.ElideRight
+                                    font: Kirigami.Theme.smallFont
+                                    opacity: 0.7
+                                }
+                            }
+
+                            Kirigami.Icon {
+                                source: "system-reboot"
+                                color: Kirigami.Theme.textColor
+    
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                                opacity: 0.5
+                            }
+                        }
+
+                        onClicked: triggerBoot(model.bootNum, model.name)
+                    }
+                }
+
+                // --- Boot Options header ---
+                PlasmaComponents.ItemDelegate {
+                    Layout.fillWidth: true
+                    visible: {
+                        for (var i = 0; i < bootEntriesModel.count; i++)
+                            if (!bootEntriesModel.get(i).isCurrent) return true
+                        return false
+                    }
+                    enabled: false
+
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
+
+                        Kirigami.Icon {
+                            source: "drive-harddisk"
+                            color: Kirigami.Theme.textColor
+
+                            Layout.preferredWidth: Kirigami.Units.iconSizes.small
+                            Layout.preferredHeight: Kirigami.Units.iconSizes.small
+                            opacity: 0.7
+                        }
+
+                        PlasmaComponents.Label {
+                            text: i18n("Boot Options")
+                            font: Kirigami.Theme.smallFont
+                            opacity: 0.7
+                        }
+
+                        Kirigami.Separator {
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                // --- Other boot entries ---
+                Repeater {
+                    model: bootEntriesModel
+
+                    delegate: PlasmaComponents.ItemDelegate {
+                        Layout.fillWidth: true
+                        visible: !model.isCurrent
+
+                        contentItem: RowLayout {
+                            spacing: Kirigami.Units.smallSpacing
+
+                            Kirigami.Icon {
+                                source: model.entryIcon
+                                color: Kirigami.Theme.textColor
+    
+                                Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+                                Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 0
+
+                                PlasmaComponents.Label {
+                                    Layout.fillWidth: true
+                                    text: model.name
+                                    elide: Text.ElideRight
+                                }
+
+                                PlasmaComponents.Label {
+                                    Layout.fillWidth: true
+                                    text: {
+                                        var parts = ["Boot" + model.bootNum]
                                         if (model.isNext) parts.unshift(i18n("Next"))
                                         if (!model.active) parts.push(i18n("Inactive"))
                                         return parts.join(" \u00b7 ")
@@ -465,6 +597,7 @@ ColumnLayout {
                             Kirigami.Icon {
                                 source: "system-reboot"
                                 color: Kirigami.Theme.textColor
+    
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 opacity: 0.5
@@ -487,6 +620,7 @@ ColumnLayout {
                         Kirigami.Icon {
                             source: "drive-removable-media-usb"
                             color: Kirigami.Theme.textColor
+
                             Layout.preferredWidth: Kirigami.Units.iconSizes.small
                             Layout.preferredHeight: Kirigami.Units.iconSizes.small
                             opacity: 0.7
@@ -517,6 +651,7 @@ ColumnLayout {
                             Kirigami.Icon {
                                 source: "drive-removable-media-usb"
                                 color: Kirigami.Theme.textColor
+    
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
                             }
@@ -549,6 +684,7 @@ ColumnLayout {
                             Kirigami.Icon {
                                 source: "system-reboot"
                                 color: Kirigami.Theme.textColor
+    
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 opacity: 0.5
@@ -586,6 +722,7 @@ ColumnLayout {
             Layout.alignment: Qt.AlignHCenter
             source: root.selectedIsUsb ? "drive-removable-media-usb" : "system-reboot"
             color: Kirigami.Theme.textColor
+
             Layout.preferredWidth: Kirigami.Units.iconSizes.huge
             Layout.preferredHeight: Kirigami.Units.iconSizes.huge
         }

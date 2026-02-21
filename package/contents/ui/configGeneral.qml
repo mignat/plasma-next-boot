@@ -30,7 +30,7 @@ KCM.SimpleKCM {
         connectedSources: []
 
         onNewData: function(sourceName, data) {
-            if (sourceName === "efibootmgr") {
+            if (sourceName === "efibootmgr -v") {
                 var stdout = data["stdout"] || ""
                 var exitCode = data["exit code"]
                 if (exitCode !== 0) {
@@ -51,7 +51,7 @@ KCM.SimpleKCM {
         for (var i = 0; i < hiddenArr.length; i++)
             hs[hiddenArr[i].trim()] = true
         hiddenSet = hs
-        executable.connectSource("efibootmgr")
+        executable.connectSource("efibootmgr -v")
     }
 
     function populateModel(output) {
@@ -62,7 +62,17 @@ KCM.SimpleKCM {
             var line = lines[i].trim()
             var entryMatch = line.match(/^Boot([0-9A-Fa-f]{4})(\*?)\s+(.+)/)
             if (entryMatch) {
-                var parsed = Utils.parseEntryName(entryMatch[3])
+                var fullText = entryMatch[3]
+
+                // Skip NB-USB: temporary entries
+                if (fullText.indexOf("NB-USB:") !== -1)
+                    continue
+
+                // Skip entries with USB device paths (firmware-created USB entries)
+                if (fullText.indexOf("USB(") !== -1 || fullText.indexOf("UsbClass(") !== -1)
+                    continue
+
+                var parsed = Utils.parseEntryName(fullText)
                 entries.push({
                     bootNum: entryMatch[1],
                     originalName: parsed.name,
