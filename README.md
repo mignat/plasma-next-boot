@@ -8,14 +8,15 @@ A KDE Plasma 6 panel widget for selecting an EFI boot entry and rebooting into i
 
 - Lists all EFI boot entries from `efibootmgr`
 - One-click reboot into any entry (sets `BootNext` then reboots)
+- **Set default boot entry** — click the star icon to change which OS boots by default (`BootOrder`)
 - **USB boot detection** — scans plugged-in USB drives for EFI bootloader files and shows them in a dedicated section
   - Reuses existing firmware boot entries when available (no extra NVRAM writes)
   - Creates temporary one-shot entries when needed (cleaned up automatically)
   - Hotplug-aware — refreshes on USB plug/unplug events
 - Hides stale USB boot entries when the drive is unplugged
-- Currently booted entry pinned to the top
+- Currently booted entry highlighted in the list
 - Custom entry names, reordering, and hiding via settings
-- Optional confirmation dialog before rebooting
+- Optional confirmation dialogs for rebooting and changing default boot entry
 - Auto-hides UEFI OS duplicate entries
 - Dynamic popup sizing that fits the content
 
@@ -89,7 +90,8 @@ Right-click the widget and select **Configure...** to:
 - Rename boot entries with custom display names
 - Reorder entries with drag arrows
 - Hide entries you don't want to see
-- Toggle the confirmation dialog
+- Toggle the reboot confirmation dialog
+- Toggle the default boot change confirmation dialog
 - Toggle UEFI OS duplicate hiding
 
 ## License
