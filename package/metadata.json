@@ -1,0 +1,18 @@
+{
+    "KPlugin": {
+        "Id": "org.kde.plasma.nextboot",
+        "Name": "Next Boot",
+        "Description": "Select next EFI boot entry and reboot",
+        "Icon": "system-reboot",
+        "Authors": [
+            {
+                "Name": "mignat"
+            }
+        ],
+        "Category": "System Information",
+        "License": "GPL-3.0-or-later",
+        "Version": "0.1.0"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

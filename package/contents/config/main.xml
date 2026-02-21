@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/2.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/2.0
+                          http://www.kde.org/standards/kcfg/2.0/kcfg.xsd">
+    <kcfgfile name=""/>
+    <group name="General">
+        <entry name="skipConfirmation" type="Bool">
+            <default>false</default>
+            <label>Skip the confirmation prompt before rebooting</label>
+        </entry>
+        <entry name="hideDuplicates" type="Bool">
+            <default>true</default>
+            <label>Hide UEFI OS duplicate entries</label>
+        </entry>
+        <entry name="customNames" type="String">
+            <default>{}</default>
+            <label>Custom display names for boot entries (JSON)</label>
+        </entry>
+        <entry name="customOrder" type="String">
+            <default></default>
+            <label>Custom display order for boot entries</label>
+        </entry>
+        <entry name="hiddenEntries" type="String">
+            <default></default>
+            <label>Comma-separated boot numbers to hide</label>
+        </entry>
+    </group>
+</kcfg>
