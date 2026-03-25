@@ -452,11 +452,11 @@ ColumnLayout {
         Layout.fillHeight: true
         visible: !root.loading && !root.usbLoading && root.errorText !== "" && !root.confirming
         text: root.errorText
-        iconName: "dialog-error"
+        iconName: "dialog-error-symbolic"
 
         helpfulAction: Kirigami.Action {
             text: i18n("Retry")
-            icon.name: "view-refresh"
+            icon.name: "view-refresh-symbolic"
             onTriggered: refresh()
         }
     }
@@ -481,8 +481,7 @@ ColumnLayout {
                         spacing: Kirigami.Units.smallSpacing
 
                         Kirigami.Icon {
-                            source: "drive-harddisk"
-                            color: Kirigami.Theme.textColor
+                            source: "drive-harddisk-symbolic"
                             Layout.preferredWidth: Kirigami.Units.iconSizes.small
                             Layout.preferredHeight: Kirigami.Units.iconSizes.small
                             opacity: 0.7
@@ -512,7 +511,6 @@ ColumnLayout {
 
                             Kirigami.Icon {
                                 source: model.entryIcon
-                                color: Kirigami.Theme.textColor
 
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
@@ -545,8 +543,7 @@ ColumnLayout {
                             }
 
                             Kirigami.Icon {
-                                source: model.isDefault ? "favorite" : "non-starred"
-                                color: Kirigami.Theme.textColor
+                                source: model.isDefault ? "favorite-symbolic" : "non-starred-symbolic"
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
                                 opacity: model.isDefault ? 0.7 : 0.3
@@ -564,8 +561,7 @@ ColumnLayout {
                             }
 
                             Kirigami.Icon {
-                                source: "system-reboot"
-                                color: Kirigami.Theme.textColor
+                                source: "system-reboot-symbolic"
 
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
@@ -590,8 +586,7 @@ ColumnLayout {
                         spacing: Kirigami.Units.smallSpacing
 
                         Kirigami.Icon {
-                            source: "drive-removable-media-usb"
-                            color: Kirigami.Theme.textColor
+                            source: "drive-removable-media-usb-symbolic"
                             Layout.preferredWidth: Kirigami.Units.iconSizes.small
                             Layout.preferredHeight: Kirigami.Units.iconSizes.small
                             opacity: 0.7
@@ -620,8 +615,7 @@ ColumnLayout {
                             spacing: Kirigami.Units.smallSpacing
 
                             Kirigami.Icon {
-                                source: "drive-removable-media-usb"
-                                color: Kirigami.Theme.textColor
+                                source: "drive-removable-media-usb-symbolic"
     
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.medium
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.medium
@@ -653,8 +647,7 @@ ColumnLayout {
                             }
 
                             Kirigami.Icon {
-                                source: "system-reboot"
-                                color: Kirigami.Theme.textColor
+                                source: "system-reboot-symbolic"
     
                                 Layout.preferredWidth: Kirigami.Units.iconSizes.small
                                 Layout.preferredHeight: Kirigami.Units.iconSizes.small
@@ -676,7 +669,7 @@ ColumnLayout {
         visible: !root.loading && !root.usbLoading && root.errorText === "" && !root.confirming
                  && bootEntriesModel.count === 0 && usbDevicesModel.count === 0
         text: i18n("No boot entries found")
-        iconName: "drive-harddisk"
+        iconName: "drive-harddisk-symbolic"
     }
 
     // Confirmation view
@@ -691,10 +684,9 @@ ColumnLayout {
 
         Kirigami.Icon {
             Layout.alignment: Qt.AlignHCenter
-            source: root.confirmingDefault ? "favorite"
-                  : root.selectedIsUsb ? "drive-removable-media-usb"
-                  : "system-reboot"
-            color: Kirigami.Theme.textColor
+            source: root.confirmingDefault ? "favorite-symbolic"
+                  : root.selectedIsUsb ? "drive-removable-media-usb-symbolic"
+                  : "system-reboot-symbolic"
 
             Layout.preferredWidth: Kirigami.Units.iconSizes.huge
             Layout.preferredHeight: Kirigami.Units.iconSizes.huge
